@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../css/all.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vue-loading-overlay@3.3.2/dist/vue-loading.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <style>
+        .img-cover {
+            object-fit: cover;
+        }
+    </style>
+</head>
+
+<body class="bg-lighter" style="background-color: burlywood;">
+    <div class="container main my-5">
+        <div class="row">
+            <main class="col post">
+                <div id="app">
+                    <div class="row" id="content">
+                        <card :pitem="item" v-for="(item, index) in showData" :key="index"></card>
+                    </div>
+                    <div class="d-flex justify-content-center mt-4">
+                        <nav aria-label="Page navigation example">
+                            <ul class="pagination" id="pageid">
+                                <pagination :ppage-num="pageNum" :ppage-date="pageDate" :ppage-total="pageTotal"
+                                    @previous-page="previousPage" @next-page="nextPage" @switch-page="switchPage">
+                                </pagination>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <loading :active.sync="isLoading"></loading>
+    <script src="../js/vendor.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-loading-overlay@3.4.0/dist/vue-loading.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.0.2/vue.global.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+    <script type="module">
+        // API 說明：https://api.kcg.gov.tw/ServiceList/Detail/9c8e1450-e833-499c-8320-29b36b7ace5c
+        // API 路徑：https://api.kcg.gov.tw/api/service/Get/9c8e1450-e833-499c-8320-29b36b7ace5c
+        // 備用 API：https://raw.githubusercontent.com/hexschool/KCGTravel/master/datastore_search.json
+        
+        const App = Vue.createApp({
+            data() {
+                return {
+                    jsonUrl: 'https://api.kcg.gov.tw/api/service/Get/9c8e1450-e833-499c-8320-29b36b7ace5c',
+                    jsonData: {},
+                    pageDate: [],
+                    pageTotal: 0, //取得總頁數
+                    dataTotal: 0, // 取得全部資料長度
+                    perpage: 20, // 預設每一頁只顯示 20 筆資料。
+                    pageNum: 1,
+                    isLoading: true, //開啟 loading
+                }
+            },
+            methods: {
+                // GET資料
+                getDate() {
+                    // fetch(this.jsonUrl, { method: 'get' })
+                    //     .then((response) => {
+                    //         return response.json();
+                    //     }).then((data) => {
+                    //         this.jsonData = data.data.XML_Head.Infos.Info;
+                    //         console.log(this.jsonData)
+                    //         pagination(this.jsonData, 1);
+                    //     })
+                    this.isLoading =  true;
+                    axios.get(this.jsonUrl).then((res) => {
+                        this.jsonData = res.data.data.XML_Head.Infos.Info;
+                        this.cutDate();
+                        // this.isLoading = false;
+                        // console.log(this.jsonData)
+                    }).catch( (error) => console.log(error));
+                },
+                //分頁資料
+                cutDate() {
+                    this.dataTotal = this.jsonData.length; // 取得全部資料長度
+                    this.pageTotal = Math.ceil(this.dataTotal / this.perpage); //取得總頁數
+                    for (let i = 0; i < this.pageTotal; i++) {
+                        this.pageDate.push(this.jsonData.slice(i * 20, i * 20 + 20));
+                    }
+                    console.log(this.pageDate);
+                },
+
+                //下一頁
+
+                nextPage() {
+                    console.log(this.pageNum, this.pageTotal)
+                    if (this.pageNum == this.pageTotal) {
+                        return
+                    } else {
+                        this.pageNum += 1
+                    }
+                },
+                //上一頁
+                previousPage() {
+                    if (this.pageNum == 1) {
+                        return
+                    } else {
+                        this.pageNum -= 1
+                    }
+                },
+
+                //選擇頁碼
+                switchPage(num) {
+                    console.log(num)
+                    this.pageNum = num;
+                }
+                //切割資料
+
+
+            },
+            created() {
+                this.getDate();
+            },
+            computed: { //根據頁面顯示資料
+                showData() {
+                    return this.pageDate[this.pageNum - 1]
+                    //currentPage預設是1,索引是從0開始所以要減1
+                }
+            }
+        });
+        App.use(VueLoading);
+        App.component('card', {
+            props: ['pitem'],
+            template: `
+            <div class="col-md-4 py-2">
+    <div class="card h-100">
+        <div class="card bg-dark text-white text-left">
+        <img class="card-img-top img-cover" :src="pitem.Picture1" height="200">
+        <div class="card-img-overlay d-flex justify-content-between align-items-end p-0 px-2" style="background-color: rgba(0, 0, 0, .2)">
+            <h5 class="card-img-title-lg">{{pitem.Name}}</h5><h5 class="card-img-title-sm">{{pitem.Zone}}</h5>
+        </div>
+        </div>
+        <div class="card-body text-left">
+            <p class="card-text"><i class="far fa-clock fa-clock-time"></i>&nbsp;{{pitem.Opentime}}</p>
+            <p class="card-text"><i class="fas fa-map-marker-alt fa-map-gps"></i>&nbsp;{{pitem.Add}}</p>
+            <p class="card-text"><i class="fas fa-mobile-alt fa-mobile"></i>&nbsp;{{pitem.Tel}}</p>
+            <p class="card-text text-success" v-if="pitem.Ticketinfo">
+            <i class="bi bi-ticket-perforated text-warning"></i>
+            &nbsp;{{pitem.Ticketinfo}}</p>
+            
+        </div>
+    </div>
+    </div>
+            `,
+        });
+        App.component('pagination', {
+            props: ['ppageNum', 'ppageDate', 'ppageTotal'],
+            methods: {
+                ppreviousPage() {
+                    this.$emit('previous-page')
+                },
+                pnextPage() {
+                    this.$emit('next-page')
+                },
+                pswitchPage(iindex) {
+                    this.$emit('switch-page', iindex)
+                }
+            },
+            template: ` <li class="page-item" :class="{'disabled': ppageNum == 1}">
+                                <a class="page-link" href="#" @Click.prevent="ppreviousPage">Previous</a>
+                            </li>
+                        <li class="page-item" :class="{'active':ppageNum == index +1}" v-for="(item,index) in ppageDate" :key="index">
+                            <a class="page-link" href="#" @Click.prevent="pswitchPage(index+1)">{{index+1}}</a>
+                        </li>
+                        <li class="page-item" :class="{'disabled': ppageNum == ppageTotal}">
+                            <a @Click.prevent="pnextPage" class="page-link" href="#">Next</a>
+                            </li>
+                `,
+        });
+        App.component('loading', VueLoading);
+        App.mount('#app');
+    </script>
+</body>
+
+</html>
