@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="stylesheet" href="../css/all.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vue-loading-overlay@3.3.2/dist/vue-loading.css">
+    <link href="https://cdn.jsdelivr.net/npm/vue-loading-overlay@3/dist/vue-loading.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
     <style>
         .img-cover {
@@ -26,7 +26,7 @@
                     </div>
                     <div class="d-flex justify-content-center mt-4">
                         <nav aria-label="Page navigation example">
-                            <ul class="pagination" id="pageid">
+                            <ul class="pagination" id="pageid" >
                                 <pagination :ppage-num="pageNum" :ppage-date="pageDate" :ppage-total="pageTotal"
                                     @previous-page="previousPage" @next-page="nextPage" @switch-page="switchPage">
                                 </pagination>
@@ -37,16 +37,19 @@
             </main>
         </div>
     </div>
-    <loading :active.sync="isLoading"></loading>
+    <loading :active.sync="visible" :can-cancel="true"></loading>
     <script src="../js/vendor.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vue-loading-overlay@3.4.0/dist/vue-loading.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-loading-overlay@3"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.0.2/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
     <script type="module">
         // API 說明：https://api.kcg.gov.tw/ServiceList/Detail/9c8e1450-e833-499c-8320-29b36b7ace5c
         // API 路徑：https://api.kcg.gov.tw/api/service/Get/9c8e1450-e833-499c-8320-29b36b7ace5c
         // 備用 API：https://raw.githubusercontent.com/hexschool/KCGTravel/master/datastore_search.json
-        
+        // Vue.use(VueLoading);
+        // import Vue from 'vue/dist/vue'
+
         const App = Vue.createApp({
             data() {
                 return {
@@ -57,26 +60,16 @@
                     dataTotal: 0, // 取得全部資料長度
                     perpage: 20, // 預設每一頁只顯示 20 筆資料。
                     pageNum: 1,
-                    isLoading: true, //開啟 loading
+                    pageflag:false,
                 }
             },
             methods: {
                 // GET資料
                 getDate() {
-                    // fetch(this.jsonUrl, { method: 'get' })
-                    //     .then((response) => {
-                    //         return response.json();
-                    //     }).then((data) => {
-                    //         this.jsonData = data.data.XML_Head.Infos.Info;
-                    //         console.log(this.jsonData)
-                    //         pagination(this.jsonData, 1);
-                    //     })
-                    this.isLoading =  true;
+
                     axios.get(this.jsonUrl).then((res) => {
                         this.jsonData = res.data.data.XML_Head.Infos.Info;
                         this.cutDate();
-                        // this.isLoading = false;
-                        // console.log(this.jsonData)
                     }).catch( (error) => console.log(error));
                 },
                 //分頁資料
@@ -122,12 +115,12 @@
             },
             computed: { //根據頁面顯示資料
                 showData() {
-                    return this.pageDate[this.pageNum - 1]
+                    return this.pageDate[this.pageNum - 1];
                     //currentPage預設是1,索引是從0開始所以要減1
                 }
             }
         });
-        App.use(VueLoading);
+        // App.use(VueLoading);
         App.component('card', {
             props: ['pitem'],
             template: `
@@ -165,7 +158,7 @@
                     this.$emit('switch-page', iindex)
                 }
             },
-            template: ` <li class="page-item" :class="{'disabled': ppageNum == 1}">
+            template: ` <li class="page-item" :class="{'disabled': ppageNum == 1}" >
                                 <a class="page-link" href="#" @Click.prevent="ppreviousPage">Previous</a>
                             </li>
                         <li class="page-item" :class="{'active':ppageNum == index +1}" v-for="(item,index) in ppageDate" :key="index">
