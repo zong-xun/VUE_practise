@@ -103,7 +103,7 @@
 
                 //選擇頁碼
                 switchPage(num) {
-                    console.log(num)
+                    console.log(document.querySelector("body,html").scrollTop)
                     this.pageNum = num;
                 }
                 //切割資料
@@ -115,6 +115,7 @@
             },
             computed: { //根據頁面顯示資料
                 showData() {
+                    document.querySelector("body,html").scrollTop = 0;
                     return this.pageDate[this.pageNum - 1];
                     //currentPage預設是1,索引是從0開始所以要減1
                 }
